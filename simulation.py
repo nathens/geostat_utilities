@@ -52,7 +52,6 @@ def unconditional_simulation(nx, ny, mu, sill, nugget, length, model):
     variogram = calculate_variogram(h, mu, sill, nugget, length, model)
     cov_size = nx * ny
     covariance = (sill - variogram).reshape((cov_size, cov_size))
-    low = cholesky(covariance)
+    low = cholesky(covariance).T
     u = np.random.normal(0, 1, size = cov_size)
-    return (mu + np.matmul(low.T,u)).reshape((ny, nx))
-
+    return (mu + np.matmul(low, u)).reshape((ny, nx))
