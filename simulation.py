@@ -9,52 +9,50 @@ import matplotlib.pyplot as plt
 from scipy.spatial.distance import pdist, squareform
 from scipy.linalg import cholesky
 
-def gaussian_variogram(h, sill, vrange, nugget):
+def gaussian_variogram(h, sill, nugget, length):
     s = sill - nugget
-    r = vrange / np.sqrt(-np.log(0.1))
+    r = length / np.sqrt(-np.log(0.1))
     gamma = nugget + s * (1 - np.exp(-(h / r)**2))
-    gamma[h < vrange * 1e-8] = 0
+    gamma[h < length * 1e-8] = 0
     return gamma
 
-def exponential_variogram(h, sill, vrange, nugget):
+def exponential_variogram(h, sill, nugget, length):
     s = sill - nugget
-    r = -vrange / np.log(0.1)
+    r = -length / np.log(0.1)
     gamma = nugget + s * (1 - np.exp(-h / r))
-    gamma[h < vrange * 1e-8] = 0
+    gamma[h < length * 1e-8] = 0
     return gamma
 
-def spherical_variogram(h, sill, vrange, nugget):
+def spherical_variogram(h, sill, nugget, length):
     s = sill - nugget
-    gamma = s * (1.5 * h / vrange - 0.5 * (h / vrange)**3)
-    gamma[h > vrange] = 1
-    gamma[h < vrange * 1e-8] = 0
+    gamma = s * (1.5 * h / length - 0.5 * (h / length)**3)
+    gamma[h > length] = 1
+    gamma[h < length * 1e-8] = 0
     return gamma
 
-def calculate_variogram(h, params):
-    sill = params[0]
-    vrange = params[1]
-    nugget = params[3]
+def calculate_variogram(h, mu, sill, nugget, length, model):
     if nugget == 0: nugget = 1e-8
-    if params[4] == 'Gaussian':
-        return gaussian_variogram(h, sill, vrange, nugget)
-    elif params[4] == 'Exponential':
-        return exponential_variogram(h, sill, vrange, nugget)
-    elif params[4] == 'Spherical':
-        return spherical_variogram(h, sill, vrange, nugget)
+    if model == 'Gaussian':
+        return gaussian_variogram(h, sill, nugget, length)
+    elif model == 'Exponential':
+        return exponential_variogram(h, sill, nugget, length)
+    elif model == 'Spherical':
+        return spherical_variogram(h, sill, nugget, length)
     else:
         raise ValueError('Variogram model must be Gaussian, Exponential, or Spherical')
 
-def unconditional_simulation(grid_size, params):
-    # grid_size = [50, 50]
-    # params = [sill, range, mean, nugget, model]
-    # returns simulation grid
-    x = np.tile(np.arange(grid_size[0]), grid_size[1])
-    y = np.repeat(np.arange(grid_size[1]), grid_size[0])
-    grid = np.stack((x.ravel(), y.ravel())).T
-    dist = squareform(pdist(grid)).flatten()
-    variogram = calculate_variogram(dist, params)
-    cov_size = grid_size[0] * grid_size[1]
-    covariance = (params[0] - variogram).reshape((cov_size, cov_size))
+def unconditional_simulation(nx, ny, mu, sill, nugget, length, model):
+    """ Performs unconditional simulation with specified mean, variance,
+    and correlation length. 2D only.
+    """
+    xx = np.tile(np.arange(nx), ny)
+    yy = np.repeat(np.arange(ny), nx)
+    grid = np.stack((xx.ravel(), yy.ravel())).T
+    h = squareform(pdist(grid)).flatten()
+    variogram = calculate_variogram(h, mu, sill, nugget, length, model)
+    cov_size = nx * ny
+    covariance = (sill - variogram).reshape((cov_size, cov_size))
     low = cholesky(covariance)
     u = np.random.normal(0, 1, size = cov_size)
-    return params[2] + np.matmul(low.T,u)
+    return (mu + np.matmul(low.T,u)).reshape((ny, nx))
+

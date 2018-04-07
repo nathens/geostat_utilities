@@ -8,6 +8,9 @@ from numpy.random import uniform as rand
 import sys
 
 def simulFFT(nx, ny, nz, mu, sill, m, lx , ly, lz):
+    """ Performs unconditional simulation with specified mean, variance,
+    and correlation length.
+    """
     if nz == 0: nz = 1 # 2D case
     xx, yy, zz = np.meshgrid(np.arange(nx), np.arange(ny), np.arange(nz))
     points = np.stack((xx.ravel(), yy.ravel(), zz.ravel())).T
@@ -28,3 +31,4 @@ def simulFFT(nx, ny, nz, mu, sill, m, lx , ly, lz):
     std = np.std(grid)
     if nx == 1 or ny == 1 or nz == 1: grid = np.squeeze(grid)
     return grid / std * np.sqrt(sill) + mu
+
