@@ -1,7 +1,6 @@
 # simulation.py
 # Created: April 6th, 2018
-# Python implementation of unconditional simulation
-# Original code from Lijing Wang - Stanford University
+# Python implementation of unconditional LU simulation
 
 from __future__ import division
 import numpy as np
@@ -10,22 +9,18 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.linalg import cholesky
 
 def gaussian_variogram(h, sill, nugget, length):
-    s = sill - nugget
-    r = length / np.sqrt(-np.log(0.1))
-    gamma = nugget + s * (1 - np.exp(-(h / r)**2))
+    gamma = (sill - nugget) * (1 - np.exp(-3 * (h / length)**2)) + nugget
     gamma[h < length * 1e-8] = 0
     return gamma
 
 def exponential_variogram(h, sill, nugget, length):
-    s = sill - nugget
-    r = -length / np.log(0.1)
-    gamma = nugget + s * (1 - np.exp(-h / r))
+    gamma = (sill - nugget) * (1 - np.exp(-3 * h / length)) + nugget
     gamma[h < length * 1e-8] = 0
     return gamma
 
 def spherical_variogram(h, sill, nugget, length):
-    s = sill - nugget
-    gamma = s * (1.5 * h / length - 0.5 * (h / length)**3)
+    # ToDo: add nugget
+    gamma = (sill - nugget) * (1.5 * h / length - 0.5 * (h / length)**3)
     gamma[h > length] = 1
     gamma[h < length * 1e-8] = 0
     return gamma
