@@ -15,13 +15,13 @@ def simulFFT(nx, ny, nz, mu, sill, m, lx , ly, lz):
     xx, yy, zz = np.meshgrid(np.arange(nx), np.arange(ny), np.arange(nz))
     points = np.stack((xx.ravel(), yy.ravel(), zz.ravel())).T
     centroid = points.mean(axis=0)
-    length = np.array([lx, ly, lz]) / 3.0
-    h = np.linalg.norm((points - centroid) / length, axis=1).reshape((ny, nx, nz))
+    length = np.array([lx, ly, lz])
+    h = np.linalg.norm((points - centroid) / length, axis = 1).reshape((ny, nx, nz))
 
     if m == 'Exponential':
-        c = np.exp(-np.abs(h)) * sill
+        c = np.exp(-3*h) * sill
     elif m == 'Gaussian':
-        c = np.exp(-(h**2)) * sill
+        c = np.exp(-3*(h)**2) * sill
 
     grid = fftn(fftshift(c)) / (nx * ny * nz)
     grid = np.abs(grid)
