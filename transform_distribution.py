@@ -2,6 +2,7 @@
 # Author: Noah Athens
 # Created: April 13th, 2018
 
+import numpy as np
 
 def transform_distribution(grid, new_distribution):
     """ Transforms grid to new distribution."""
