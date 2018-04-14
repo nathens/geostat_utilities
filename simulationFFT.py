@@ -32,3 +32,37 @@ def simulFFT(nx, ny, nz, mu, sill, m, lx , ly, lz):
     if nx == 1 or ny == 1 or nz == 1: grid = np.squeeze(grid)
     return grid / std * np.sqrt(sill) + mu
 
+def simulFFT_rotate(nx, ny, mu, sill, m, lx , ly, angle):
+        """ Performs unconditional simulation with specified mean, variance,
+    and correlation length. Rotates the grid by the specified angle. 2D only.
+    """
+    ox = nx
+    oy = ny
+    if angle >= 0:
+        multiplier = max(nx, ny) * 1.45
+    else:
+        multiplier = min(nx, ny) * 1.45
+    nx = int(np.ceil(multiplier))
+    ny = int(np.ceil(multiplier))
+    xx, yy = np.meshgrid(np.arange(nx), np.arange(ny))
+    points = np.stack((xx.ravel(), yy.ravel())).T
+    centroid = points.mean(axis=0)
+    length = np.array([lx, ly])
+    h = np.linalg.norm((points - centroid) / length, axis = 1).reshape((ny, nx))
+
+    if m == 'Exponential':
+        c = np.exp(-3*h) * sill
+    elif m == 'Gaussian':
+        c = np.exp(-3*h**2) * sill
+
+    grid = fftn(fftshift(c)) / (nx * ny)
+    grid = np.abs(grid)
+    grid[0, 0] = 0 # reference level
+    ran = np.sqrt(grid) * np.exp(1j * np.angle(fftn(rand(size=(ny, nx)))))
+    grid = np.real(ifftn(ran * nx * ny))
+    std = np.std(grid)
+    grid = grid / std * np.sqrt(sill) + mu
+    grid = rotate(grid, angle, order=3, cval=0)
+    lowerleft = int(grid.shape[0] / 2) - ox / 2 , int(grid.shape[1] / 2 - oy / 2)
+    grid = grid[lowerleft[0]: lowerleft[0] + ox, lowerleft[1]: lowerleft[1] + oy]
+    return grid
