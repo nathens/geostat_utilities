@@ -21,7 +21,7 @@ def simulFFT(nx, ny, nz, mu, sill, m, lx , ly, lz):
     if m == 'Exponential':
         c = np.exp(-3*h) * sill
     elif m == 'Gaussian':
-        c = np.exp(-3*(h)**2) * sill
+        c = np.exp(-3*h**2) * sill
 
     grid = fftn(fftshift(c)) / (nx * ny * nz)
     grid = np.abs(grid)
@@ -33,9 +33,7 @@ def simulFFT(nx, ny, nz, mu, sill, m, lx , ly, lz):
     return grid / std * np.sqrt(sill) + mu
 
 def simulFFT_rotate(nx, ny, mu, sill, m, lx , ly, angle):
-        """ Performs unconditional simulation with specified mean, variance,
-    and correlation length. Rotates the grid by the specified angle. 2D only.
-    """
+    """ Separate version of simulFFT for 2D rotation. """
     ox = nx
     oy = ny
     if angle >= 0:
